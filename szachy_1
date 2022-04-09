@@ -1,0 +1,215 @@
+% facts - chess board positions of piecies
+piece(knight, white, a, 6).
+piece(knight, white, h, 3).
+piece(bishop, white, a, 2).
+piece(bishop, white, b, 2).
+piece(rook,   white, b, 4).
+piece(rook,   white, g, 5).
+piece(queen,  white, f, 3).
+piece(king,   white, g, 6).
+piece(pawn,   black, d, 5).
+piece(pawn,   black, d, 6).
+piece(pawn,   black, d, 7).
+piece(pawn,   black, e, 2).
+piece(pawn,   black, e, 7).
+piece(pawn,   black, g, 4).
+piece(knight, black, c, 2).
+piece(bishop, black, a, 8).
+piece(bishop, black, e, 3).
+piece(rook,   black, c, 4).
+piece(rook,   black, c, 5).
+piece(queen,  black, f, 1).
+piece(king,   black, e, 6).
+
+%%%
+%%% LOGIC
+%%%
+
+% translate a-h char to int value - will operate on numbers
+translated(1, a).
+translated(2, b).
+translated(3, c).
+translated(4, d).
+translated(5, e).
+translated(6, f).
+translated(7, g).
+translated(8, h).
+
+% is piece of color C on x: int, y: int
+is_piece(X, Y, C) :- 
+    translated(X, TX),
+    piece(_, C, TX, Y).
+
+% is piece on x: int, y: int
+is_piece(X, Y) :- is_piece(X, Y, _).
+
+% is [X, Y] a valid board coordinate
+valid(X, Y) :- X > 0, Y > 0, 9 > X, 9 > Y.
+
+% is given spot empty
+empty(X, Y) :- not(is_piece(X, Y)).
+
+% is offset spot empty
+empty(X,XD,Y,YD) :- 
+    NX is X + XD,
+    NY is Y + YD,
+    empty(NX, NY).
+
+% enemy colors definition
+enemy_color(black, white).
+enemy_color(white, black).
+
+% is enemy of C color in given X Y spot
+enemy(X, Y, C) :- 
+    enemy_color(C, E),
+    is_piece(X, Y, E).
+
+enemy_or_empty(X, Y, C) :- enemy(X, Y, C).
+enemy_or_empty(X, Y, _) :- empty(X, Y).
+
+%%%
+%%% UTILS
+%%%
+
+% check range between [X1 X2] so [X1+n] for n 1..(X2-X1-1)
+rangutil1(A,B,T1,T2) :- A > B, T1 is B + 1, T2 is A - 1.
+rangutil1(A,B,T1,T2) :- B > A, T1 is A + 1, T2 is B - 1.
+rangutil1(A,B,T1,T2) :- A = B, T1 is A, T2 is B.
+
+empty_row(X1,X2,Y) :-
+    rangutil1(X1,X2,XA,XB),
+    forall(between(XA,XB,X), empty(X,Y)).
+
+empty_col(X,Y1,Y2) :-
+    rangutil1(Y1,Y2,YA,YB),
+    forall(between(YA,YB,Y), empty(X,Y)). 
+
+empty_diag(X,Y,D) :-
+    rangutil1(0,D,DS,DE),
+    forall(between(DS,DE,ND), empty(X,ND,Y,ND)).
+    
+both_zeros(A,B) :-
+    A = 0,
+    B = 0.
+
+% PAWN movement
+
+% white pawns go up
+movement(pawn, white, X, Y, X, NY) :- NY is Y + 1.
+movement(pawn, white, X, 2, X, 4). % can go by two in first move
+% killing
+movement(pawn, white, X, Y, NX, NY) :- 
+    enemy(NX, NY, white),
+    NX is X + 1,
+    NY is Y + 1.
+movement(pawn, white, X, Y, NX, NY) :- 
+    enemy(NX, NY, white),
+    NX is X - 1,
+    NY is Y + 1.
+
+% black pawns go down
+movement(pawn, black, X, Y, X, NY) :- NY is Y - 1.
+movement(pawn, black, X, 7, X, 5). % can go by two in first move
+% killing
+movement(pawn, black, X, Y, NX, NY) :- 
+    enemy(NX, NY, black),
+    NX is X + 1,
+    NY is Y - 1.
+movement(pawn, black, X, Y, NX, NY) :- 
+    enemy(NX, NY, black),
+    NX is X - 1,
+    NY is Y - 1.
+
+% ROOK movement
+
+% horizontal
+movement(rook, _, X, Y, NX, Y) :- 
+    between(-8,8,DX),
+    dif(DX, 0),
+    NX is X + DX,
+    empty_row(X,NX,Y).
+
+% vertical
+movement(rook, _, X, Y, X, NY) :- 
+    between(-8,8,DY),
+    dif(DY, 0),
+    NY is Y + DY,
+    empty_col(X,Y,NY).
+                                
+% BISHOP movement
+
+movement(bishop, _, X, Y, NX, NY) :- 
+    between(-8,8,D),
+    dif(D, 0),
+    empty_diag(X,Y,D),
+    NX is X + D,
+    NY is Y + D.
+                                     
+% QUEEN movement
+
+% queen movement is combined movement of bishop and rook
+movement(queen, _, X, Y, NX, NY) :- 
+    movement(bishop, _, X, Y, NX, NY);
+    movement(rook, _, X, Y, NX, NY).
+
+% KNIGHT movement
+
+% hardcoded L shape moves
+movement(knight, _, X, Y, NX, NY) :- 
+    NX is X + 1, NY is Y + 2;
+    NX is X + 2, NY is Y + 1;
+    NX is X - 1, NY is Y + 2;
+    NX is X - 2, NY is Y + 1;
+    NX is X + 1, NY is Y - 2;
+    NX is X + 2, NY is Y - 1;
+    NX is X - 1, NY is Y - 2;
+    NX is X - 2, NY is Y - 1.
+
+% KING movement
+
+movement(king, C, X, Y, NX, NY) :-
+    between(-1,1,DX),
+    between(-1,1,DY),
+    not(both_zeros(DX,DY)),
+    NX is X + DX,
+    NY is Y + DY,
+    not(mated(NX, NY, C, _)), % king cant stand on the field that enemy can reach...
+    not(kings_touching(NX, NY, C)). % king cant stand next to other king...
+
+% other color piece can move there
+mated(X, Y, C, P) :-
+    enemy_color(C, E),
+    translated(X,TX),
+    P \= king, % block infinite recursion! 
+    moves(P, E, _, _, TX, Y).
+
+kings_touching(X,Y,C) :-
+    enemy_color(C, E),
+    between(-1,1,DX),
+    between(-1,1,DY),
+    not(both_zeros(DX,DY)),
+    NX is X + DX,
+    NY is Y + DY,
+    translated(NX,TX),
+    piece(king, E, TX, NY).
+
+% move P: piece of C: color from [X: char, Y: int] to [NX: char, NY: int] 
+move(P, C, X, Y, NX, NY) :- 
+    translated(TX, X),
+    movement(P, C, TX, Y, NTX, NY),
+    valid(NTX, NY),
+    enemy_or_empty(NTX, NY, C),
+    translated(NTX, NX).
+
+%%%
+%%% 'PUBLIC'
+%%%
+
+% move from [X: char, Y: int] to [NX: char, NY: int] 
+move(X, Y, NX, NY) :- 
+    piece(P, C, X, Y),
+    move(P, C, X, Y, NX, NY).
+
+moves(P, C, X, Y, NX, NY) :- 
+    piece(P, C, X, Y),
+    move(P, C, X, Y, NX, NY).
