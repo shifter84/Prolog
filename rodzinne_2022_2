@@ -1,0 +1,93 @@
+son(adam,jan).
+son(krzysztof,piotr).
+son(norbert,adam).
+son(adam,ewa).
+son(krzysztof,maria).
+son(maciej,monika).
+son(damian,damazy).
+
+dotr(maria,ewa).
+dotr(monika,halina).
+dotr(maria,jan).
+dotr(monika,adam).
+dotr(halina,edward).
+
+gender(edward,m).
+gender(jan,m).
+gender(piotr,m).
+gender(damazy,m).
+
+%%%
+%%% 1.
+%%%
+
+gender(A, m) :- son(A, _).
+gender(A, k) :- dotr(A, _).
+
+% rodzice
+parent(A, B) :- dotr(B, A); son(B, A).
+
+ma(A, B) :- parent(A, B), gender(A, k).
+pa(A, B) :- parent(A, B), gender(A, m).
+
+% dziadkowie
+grandparent(A, B) :- parent(A, C), parent(C, B).
+
+grandma(A, B) :- grandparent(A, B), gender(A, k).
+grandpa(A, B) :- grandparent(A, B), gender(A, m).
+
+% dzieci
+child(A, B) :- parent(B, A).
+
+% rodzeństwo
+sib(A,B) :- child(A,C), child(B,C), A \= B.
+
+bro(A, B) :- sib(A, B), gender(A, m).
+sis(A, B) :- sib(A, B), gender(A, k).
+
+% wujostwo
+psib(A,B) :- sib(A,C), parent(C,B).
+
+muncle(A,B) :- bro(A, C), ma(C, B).
+puncle(A,B) :- bro(A, C), pa(C, B).
+aunt(A,B) :- sis(A,C), parent(C,B).
+
+
+% ciekawsze relacje
+offspring(A,B) :-
+    parent(B,A);
+    parent(B,C), offspring(A,C).
+
+ancestor(A,B) :- offspring(B,A).
+
+cousin(A,B) :- psib(C,B), child(A,C).
+
+% krewni = mający wspólnego przodka
+related(A,B) :- offspring(A,C), offspring(B,C), A \= B.
+
+%%% naciągane
+
+% mający wspólne dzieci
+wife(A,B) :- parent(A, C), parent(B, C), gender(A, k), gender(B, m).
+husband(A,B) :- parent(A, C), parent(B, C), gender(A, m), gender(B, k).
+
+
+%%%
+%%% 2.
+%%%
+
+count_offspring(N, A) :-
+    findall(M, offspring(M,A), L),
+    sort(L, LS),
+    length(LS, N).
+
+count_grandpas(N) :-
+    findall(M, grandpa(M, _), L),
+    sort(L, LS),
+    length(LS, N).
+
+m_3(nie,A,B) :- ma(C, B), A \= C.
+m_3(tak,A,B) :- ma(A, B).
+m_3(niewiadomo,_,_).
+
+m3(X,A,B) :- m_3(X,A,B),!.
