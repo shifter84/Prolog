@@ -1,0 +1,59 @@
+figura(skoczek,biale,a,6).
+figura(skoczek,biale,h,3).
+figura(goniec,biale,a,2).
+figura(goniec,biale,b,2).
+figura(wieza,biale,b,4).
+figura(wieza,biale,g,5).
+figura(hetman,biale,f,3).
+figura(krol,biale,g,6).
+figura(pion,czarne,d,5).
+figura(pion,czarne,d,6).
+figura(pion,czarne,d,7).
+figura(pion,czarne,e,2).
+figura(pion,czarne,e,7).
+figura(pion,czarne,g,4).
+figura(skoczek,czarne,c,2).
+figura(goniec,czarne,a,8).
+figura(goniec,czarne,e,3).
+figura(wieza,czarne,c,4).
+figura(wieza,czarne,c,5).
+figura(hetman,czarne,f,1).
+figura(krol,czarne,e,6).
+
+liczba(1,a).
+liczba(2,b).
+liczba(3,c).
+liczba(4,d).
+liczba(5,e).
+liczba(6,f).
+liczba(7,g).
+liczba(8,h).
+
+lewo_lub_prawo(-1).
+lewo_lub_prawo(1).
+
+skoczek_ruch(2,-1).
+skoczek_ruch(2,1).
+skoczek_ruch(-2,-1).
+skoczek_ruch(-2,1).
+skoczek_ruch(1,-2).
+skoczek_ruch(1,2).
+skoczek_ruch(-1,-2).
+skoczek_ruch(-1,2).
+
+pole_puste(X,Y) :- \+figura(_,_,X,Y).
+
+
+%bialy pion bicie
+pos(Ks,Ws,Kd,Wd):-figura(pion,biale,Ks,Ws),liczba(Ksl,Ks),lewo_lub_prawo(Przesun),Kdl is Ksl+Przesun,liczba(Kdl,Kd),Wd is Ws+1,figura(_,czarne,Kd,Wd).
+%czarny pion bicie
+pos(Ks,Ws,Kd,Wd):-figura(pion,czarne,Ks,Ws),liczba(Ksl,Ks),lewo_lub_prawo(Przesun),Kdl is Ksl+Przesun,liczba(Kdl,Kd),Wd is Ws-1,figura(_,biale,Kd,Wd).
+
+%czarny pion ruch
+pos(Ks,Ws,Kd,Wd):-figura(pion,czarne,Ks,Ws),liczba(Ksl,Ks),lewo_lub_prawo(Przesun),Kdl is Ksl,liczba(Kdl,Kd),Wd is Ws+Przesun,pole_puste(Kd,Wd).
+
+%czarny skoczek
+pos(Ks,Ws,Kd,Wd):-figura(skoczek,czarne,Ks,Ws),liczba(Ksl,Ks),skoczek_ruch(K1,W1),Kdl is Ksl+K1,liczba(Kdl,Kd),Wd is Ws+W1,(pole_puste(Kd,Wd);figura(_,biale,Kd,Wd)).
+
+%bialy skoczek
+pos(Ks,Ws,Kd,Wd):-figura(skoczek,biale,Ks,Ws),liczba(Ksl,Ks),skoczek_ruch(K1,W1),Kdl is Ksl+K1,liczba(Kdl,Kd),Wd is Ws+W1,(pole_puste(Kd,Wd);figura(_,czarne,Kd,Wd)).
