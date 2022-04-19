@@ -51,6 +51,8 @@ pos(Ks,Ws,Kd,Wd):-figura(pion,czarne,Ks,Ws),liczba(Ksl,Ks),lewo_lub_prawo(Przesu
 
 %czarny pion ruch
 pos(Ks,Ws,Kd,Wd):-figura(pion,czarne,Ks,Ws),liczba(Ksl,Ks),lewo_lub_prawo(Przesun),Kdl is Ksl,liczba(Kdl,Kd),Wd is Ws+Przesun,pole_puste(Kd,Wd).
+%bialy pion ruch
+pos(Ks,Ws,Kd,Wd):-figura(pion,biale,Ks,Ws),liczba(Ksl,Ks),lewo_lub_prawo(Przesun),Kdl is Ksl,liczba(Kdl,Kd),Wd is Ws+Przesun,pole_puste(Kd,Wd).
 
 %czarny skoczek
 pos(Ks,Ws,Kd,Wd):-figura(skoczek,czarne,Ks,Ws),liczba(Ksl,Ks),skoczek_ruch(K1,W1),Kdl is Ksl+K1,liczba(Kdl,Kd),Wd is Ws+W1,(pole_puste(Kd,Wd);figura(_,biale,Kd,Wd)).
